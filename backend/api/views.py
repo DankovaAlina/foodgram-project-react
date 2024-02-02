@@ -4,7 +4,7 @@ from django.db.models import Q
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import generics, status, viewsets
+from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -21,12 +21,6 @@ from api.serializers import (
 )
 from recipes.consts import ERROR_MESSAGE_DELETE_FAV_SHOPPING_CART
 from recipes.models import Ingredient, Recipe, Tag, User
-
-
-class UserSignup(generics.CreateAPIView):
-    """Вьюсет регистрации пользователя."""
-
-    serializer_class = UserSignupSerializer
 
 
 class UserToken(UserAuthMixin):
