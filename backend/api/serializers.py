@@ -193,38 +193,52 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
                   'image', 'text', 'cooking_time'
                   )
         read_only_fields = ('id', 'author')
+        errors = {}
 
-    def validate(self, attrs):
+    def validate_fill_fields(self, attrs):
+        """Проверяет заполнение обязательных полей."""
         required_fields = (
             'ingredients', 'tags',
             'name', 'text', 'cooking_time'
         )
-        errors = {}
         for field in required_fields:
             if field not in attrs or not attrs[field]:
-                errors[field] = 'Поле обязательно для заполнения.'
+                self.errors[field] = 'Поле обязательно для заполнения.'
         if not self.instance and 'image' not in attrs:
-            errors['image'] = 'Поле обязательно для заполнения.'
-        if errors:
-            raise serializers.ValidationError(errors)
-        unique_ingredients = set(
-            [ingredient['ingredient']['id']
-             for ingredient in attrs['ingredients']]
+            self.errors['image'] = 'Поле обязательно для заполнения.'
+        if self.errors:
+            raise serializers.ValidationError(self.errors)
+
+    def validate_unique_items(self, obj_list, attrs, key):
+        """Проверяет уникальность заполнения переданных id объектов.."""
+        unique_objects = set(obj_list)
+        if len(unique_objects) != len(attrs[key]):
+            self.errors[key] = f'Нельзя дублировать {key}.'
+
+    def validate_exists(self, model, ids_list, error_key):
+        """Проверяет существование оъектов в списке."""
+        for id in ids_list:
+            if not model.objects.filter(id=id).exists():
+                self.errors[error_key] = (f'{error_key} [{id}] '
+                                          'не существует.')
+
+    def validate(self, attrs):
+        self.validate_fill_fields()
+        ingredients_id = [ingredient['ingredient']['id']
+                          for ingredient in attrs['ingredients']]
+        tags_id = attrs['tags']
+        self.validate_unique_items(
+            ingredients_id,
+            attrs,
+            'ingredients'
         )
-        if len(unique_ingredients) != len(attrs['ingredients']):
-            errors['ingredients'] = 'Нельзя дублировать игредиент.'
-        unique_tags = set(attrs['tags'])
-        if len(unique_tags) != len(attrs['tags']):
-            errors['tags'] = 'Нельзя дублировать тег.'
-        for ingredient in unique_ingredients:
-            if not Ingredient.objects.filter(id=ingredient).exists():
-                errors['ingredients'] = (f'Ингредиент [{ingredient}] '
-                                         'не существует.')
-        for tag in unique_tags:
-            if not Tag.objects.filter(id=tag).exists():
-                errors['tags'] = f'Тег [{tag}] не существует.'
-        if errors:
-            raise serializers.ValidationError(errors)
+        self.validate_unique_items(
+            tags_id, attrs, 'tags'
+        )
+        self.validate_exists(Ingredient, ingredients_id, 'ingredients')
+        self.validate_exists(Tag, tags_id, 'tags')
+        if self.errors:
+            raise serializers.ValidationError(self.errors)
         return attrs
 
     def add_tags(self, recipe, tags_data):
