@@ -67,6 +67,12 @@ python3 manage.py runserver
 - DEBUG - bool - флаг использования режима отладки
 - ALLOWED_HOSTS - str - разрешенные хосты с разделителем через запятую ('localhost,127.0.0.1')
 
+# **Данные для доступа**
+
+- Доменное имя: https://projectfoodgram.hopto.org/
+- Логин администратора: alina
+- Пароль администратора: alina31121996@
+
 # **Автор**
 
 @DankovaAlina
