@@ -1,9 +1,11 @@
+import base64
 import webcolors
 
 from django.contrib.auth.hashers import make_password
+from django.core.files.base import ContentFile
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
-from drf_extra_fields.fields import Base64ImageField
+# from drf_extra_fields.fields import Base64ImageField
 from rest_framework import serializers
 from rest_framework.authtoken.models import Token
 
@@ -15,6 +17,17 @@ from recipes.models import (
     Ingredient, Recipe, RecipeIngredient, RecipeTag, Tag, User
 )
 from recipes.validators import username_validator, validate_username_me
+
+
+class Base64ImageField(serializers.ImageField):
+    def to_internal_value(self, data):
+        if isinstance(data, str) and data.startswith('data:image'):
+            format, imgstr = data.split(';base64,')
+            ext = format.split('/')[-1]
+
+            data = ContentFile(base64.b64decode(imgstr), name='temp.' + ext)
+
+        return super().to_internal_value(data)
 
 
 class UserInfoSerializer(serializers.ModelSerializer):
@@ -279,6 +292,7 @@ class RecipeReadSerializer(serializers.ModelSerializer):
     ingredients = serializers.SerializerMethodField()
     author = UserInfoSerializer()
     image = Base64ImageField()
+    # image = Base64ImageField()
     is_favorited = serializers.SerializerMethodField()
     is_in_shopping_cart = serializers.SerializerMethodField()
 
