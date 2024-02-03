@@ -304,7 +304,7 @@ class RecipeReadSerializer(serializers.ModelSerializer):
         model = Recipe
         fields = ('id', 'tags', 'author', 'ingredients',
                   'is_favorited', 'is_in_shopping_cart', 'name',
-                  'image', 'text', 'cooking_time'
+                  'image', 'image_url', 'text', 'cooking_time'
                   )
 
     def get_image_url(self, obj):
