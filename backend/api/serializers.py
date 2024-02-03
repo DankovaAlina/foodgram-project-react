@@ -292,6 +292,10 @@ class RecipeReadSerializer(serializers.ModelSerializer):
     ingredients = serializers.SerializerMethodField()
     author = UserInfoSerializer()
     image = Base64ImageField()
+    image_url = serializers.SerializerMethodField(
+        'get_image_url',
+        read_only=True,
+    )
     # image = Base64ImageField()
     is_favorited = serializers.SerializerMethodField()
     is_in_shopping_cart = serializers.SerializerMethodField()
@@ -302,6 +306,11 @@ class RecipeReadSerializer(serializers.ModelSerializer):
                   'is_favorited', 'is_in_shopping_cart', 'name',
                   'image', 'text', 'cooking_time'
                   )
+
+    def get_image_url(self, obj):
+        if obj.image:
+            return obj.image.url
+        return None
 
     def get_tags(self, obj):
         """Получает теги рецепта."""
