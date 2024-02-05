@@ -90,17 +90,16 @@ class UserViewSet(viewsets.ModelViewSet):
             serializer.is_valid(raise_exception=True)
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
-        else:
-            if not user.subscriptions.filter(id=user_to_subscribe.id).exists():
-                return Response(
-                    status=status.HTTP_400_BAD_REQUEST,
-                    data={
-                        'errors': ('Подписки на данного '
-                                   'пользователя не существует.')
-                    }
-                )
-            user.subscriptions.remove(user_to_subscribe)
-            return Response(status=status.HTTP_204_NO_CONTENT)
+        if not user.subscriptions.filter(id=user_to_subscribe.id).exists():
+            return Response(
+                status=status.HTTP_400_BAD_REQUEST,
+                data={
+                    'errors': ('Подписки на данного '
+                               'пользователя не существует.')
+                }
+            )
+        user.subscriptions.remove(user_to_subscribe)
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(
         detail=False,
@@ -172,18 +171,17 @@ class RecipeViewSet(viewsets.ModelViewSet):
             serializer.is_valid(raise_exception=True)
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
-        else:
-            recipe = get_object_or_404(Recipe, id=pk)
-            if not recipe.favorite_recipes.filter(
-                id=self.request.user.id
-            ).exists():
-                return Response(
-                    status=status.HTTP_400_BAD_REQUEST,
-                    data={'errors': ERROR_MESSAGE_DELETE_FAV_SHOPPING_CART.
-                          format('избранное')}
-                )
-            recipe.favorite_recipes.remove(self.request.user)
-            return Response(status=status.HTTP_204_NO_CONTENT)
+        recipe = get_object_or_404(Recipe, id=pk)
+        if not recipe.favorite_recipes.filter(
+            id=self.request.user.id
+        ).exists():
+            return Response(
+                status=status.HTTP_400_BAD_REQUEST,
+                data={'errors': ERROR_MESSAGE_DELETE_FAV_SHOPPING_CART.
+                      format('избранное')}
+            )
+        recipe.favorite_recipes.remove(self.request.user)
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(
         detail=True,
@@ -202,18 +200,17 @@ class RecipeViewSet(viewsets.ModelViewSet):
             serializer.is_valid(raise_exception=True)
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
-        else:
-            recipe = get_object_or_404(Recipe, id=pk)
-            if not recipe.shopping_cart_recipes.filter(
-                id=self.request.user.id
-            ).exists():
-                return Response(
-                    status=status.HTTP_400_BAD_REQUEST,
-                    data={'errors': ERROR_MESSAGE_DELETE_FAV_SHOPPING_CART
-                          .format('список покупок')}
-                )
-            recipe.shopping_cart_recipes.remove(self.request.user)
-            return Response(status=status.HTTP_204_NO_CONTENT)
+        recipe = get_object_or_404(Recipe, id=pk)
+        if not recipe.shopping_cart_recipes.filter(
+            id=self.request.user.id
+        ).exists():
+            return Response(
+                status=status.HTTP_400_BAD_REQUEST,
+                data={'errors': ERROR_MESSAGE_DELETE_FAV_SHOPPING_CART
+                      .format('список покупок')}
+            )
+        recipe.shopping_cart_recipes.remove(self.request.user)
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(
         detail=False,
@@ -234,15 +231,15 @@ class RecipeViewSet(viewsets.ModelViewSet):
                      'attachment; filename="shopping_list.csv"'},
         )
         for recipe in recipes:
-            for ingr_rel in recipe.recipe_ingredient.all():
+            for ingr_rel in recipe.ingredients.all():
                 if ingr_rel.ingredient not in shopping_cart:
                     shopping_cart[ingr_rel.ingredient] = ingr_rel.amount
                 else:
                     shopping_cart[ingr_rel.ingredient] += ingr_rel.amount
         writer = csv.writer(response)
         writer.writerow(['Название', 'Единица измерения', 'Количество'])
-        for ingredient, amount in shopping_cart.items():
-            writer.writerow(
-                [ingredient.name, ingredient.measurement_unit, amount]
-            )
+        writer.writerows(
+            [[ingredient.name, ingredient.measurement_unit, amount]
+             for ingredient, amount in shopping_cart.items()]
+        )
         return response

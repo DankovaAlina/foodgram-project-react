@@ -42,8 +42,7 @@ class RecipeFilter(filters.FilterSet):
         )
         if value:
             return queryset.filter(condition_is_favorited)
-        else:
-            return queryset.exclude(condition_is_favorited)
+        return queryset.exclude(condition_is_favorited)
 
     def filter_is_in_shopping_cart(self, queryset, name, value):
         if not self.request.user.id:
@@ -53,5 +52,4 @@ class RecipeFilter(filters.FilterSet):
         )
         if value:
             return queryset.filter(condition_is_in_shopping_cart)
-        else:
-            return queryset.exclude(condition_is_in_shopping_cart)
+        return queryset.exclude(condition_is_in_shopping_cart)

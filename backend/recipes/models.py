@@ -1,11 +1,13 @@
 from django.contrib import admin
 from django.contrib.auth.models import AbstractUser
-from django.core.validators import MinValueValidator
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
 from recipes.consts import (
     MAX_LEN_COLOR, MAX_LEN_EMAIL, MAX_LEN_NAME,
-    MAX_LEN_PASSWORD, MAX_LEN_RECIPE_NAME
+    MAX_LEN_PASSWORD, MAX_LEN_RECIPE_NAME,
+    MAX_VALUE_AMOUNT, MAX_VALUE_COOKING_TIME,
+    MIN_VALUE_AMOUNT, MIN_VALUE_COOKING_TIME
 )
 from recipes.validators import username_validator, validate_username_me
 
@@ -105,18 +107,25 @@ class Recipe(models.Model):
         verbose_name='Изображение'
     )
     text = models.TextField('Описание')
-    ingredients = models.ManyToManyField(
+    ingredients_fk = models.ManyToManyField(
         Ingredient,
         through='RecipeIngredient',
-        verbose_name='Игредиенты'
+        verbose_name='Игредиенты',
+        related_name='ingredients_fk'
     )
     cooking_time = models.PositiveSmallIntegerField(
         'Время приготовления (в минутах)',
         validators=(
             MinValueValidator(
-                1,
-                message='Время приготовления не может быть меньше 1 минуты.'
+                MIN_VALUE_COOKING_TIME,
+                message=(f'Время приготовления не может быть '
+                         f'меньше {MIN_VALUE_COOKING_TIME}.')
             ),
+            MaxValueValidator(
+                MAX_VALUE_COOKING_TIME,
+                message=(f'Время приготовления не может быть '
+                         f'больше {MAX_VALUE_COOKING_TIME}.')
+            )
         )
     )
     favorite_recipes = models.ManyToManyField(
@@ -155,24 +164,31 @@ class RecipeIngredient(models.Model):
     ingredient = models.ForeignKey(
         Ingredient,
         on_delete=models.CASCADE,
-        verbose_name='Ингредиент'
+        verbose_name='Ингредиент',
+        related_name='recipes'
     )
     recipe = models.ForeignKey(
         Recipe,
         on_delete=models.CASCADE,
-        verbose_name='Рецепт'
+        verbose_name='Рецепт',
+        related_name='ingredients'
     )
     amount = models.PositiveSmallIntegerField(
         'Количество',
         validators=(
             MinValueValidator(
-                1,
-                message='Количество не может быть меньше 1.'
+                MIN_VALUE_AMOUNT,
+                message=f'Количество не может быть меньше {MIN_VALUE_AMOUNT}.'
             ),
+            MaxValueValidator(
+                MAX_VALUE_AMOUNT,
+                message=f'Количество не может быть больше {MAX_VALUE_AMOUNT}.'
+            )
         )
     )
 
     class Meta:
+        ordering = ('recipe',)
         default_related_name = 'recipe_ingredient'
         verbose_name = 'Ингредиент в рецептах'
         verbose_name_plural = 'Ингредиенты в рецептах'
@@ -198,7 +214,8 @@ class RecipeTag(models.Model):
     )
 
     class Meta:
-        default_related_name = 'tag_ingredient'
+        ordering = ('recipe',)
+        default_related_name = 'recipe_tag'
         verbose_name = 'Тег в рецептах'
         verbose_name_plural = 'Теги в рецептах'
 
