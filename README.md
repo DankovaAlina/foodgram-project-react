@@ -70,8 +70,6 @@ python3 manage.py runserver
 # **Данные для доступа**
 
 - Доменное имя: https://projectfoodgram.hopto.org/
-- Логин администратора: alina
-- Пароль администратора: alina31121996@
 
 # **Автор**
 
